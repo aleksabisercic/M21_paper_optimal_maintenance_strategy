@@ -8,9 +8,9 @@
 Predictions on unseen data
 Best ML model as of now:
 
-![Tensorflow_Lstm_mi](https://user-images.githubusercontent.com/64646644/101637038-7c1a4300-3a2c-11eb-9fc9-34468972d3d4.png)
+![Tensorflow_Lstm_mi](https://user-images.githubusercontent.com/64646644/101638862-e7651480-3a2e-11eb-807d-0712de9f3c89.png)
 
 Statistical_best_model:
 
-![Deterministic_normal_tf](https://user-images.githubusercontent.com/64646644/101637672-5a6d8b80-3a2d-11eb-8311-204cb4ed5977.png)
+![Deterministic_normal_tf](https://user-images.githubusercontent.com/64646644/101638766-c7355580-3a2e-11eb-8ca0-f6c229d07de4.png)
 
