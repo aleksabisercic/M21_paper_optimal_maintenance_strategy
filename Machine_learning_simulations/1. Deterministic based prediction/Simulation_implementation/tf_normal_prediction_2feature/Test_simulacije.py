@@ -20,11 +20,8 @@ HAPPY_COLORS_PALETTE = ["#01BEFE", "#FFDD00", "#FF7D00", "#FF006D", "#93D30C", "
 
 sns.set_palette(sns.color_palette(HAPPY_COLORS_PALETTE))
 
-rcParams['figure.figsize'] = 14, 10
-register_matplotlib_converters()
-
-Real_data = np.load("Repair_rates30dt10080h.npy30.npy").reshape(-1,1)
-Sim_data = np.load("Repair_rates30dt10080min_simulacija.npy30.npy")
+Real_data = np.load("Repair_rates60dt21600h.npy60.npy").reshape(-1,1)
+Sim_data = np.load("Repair_rates60dt21600min_simulacija.npy60.npy")
 
 Test_data = Real_data[-len(Sim_data):].reshape(-1,1)
 
@@ -37,7 +34,6 @@ print(MAE_sim)
 plt.plot(Sim_data, '-C2')
 plt.plot(Test_data, '-b')
 plt.show()
-plt.savefig('pera')
 
 
 Real_data = np.load("Failure_rates_30dt_21600h.npy").reshape(-1,1)
@@ -54,5 +50,5 @@ print(MAE_sim)
 plt.plot(Sim_data, '-C2')
 plt.plot(Test_data, '-b')
 plt.show()
-plt.savefig('pera')
+
 

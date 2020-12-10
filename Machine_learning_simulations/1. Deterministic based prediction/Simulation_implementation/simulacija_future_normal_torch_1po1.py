@@ -16,9 +16,16 @@ from scipy.optimize import fsolve
 import torch
 import torch.nn as nn
 import pandas as pd
+from torch.utils.data import DataLoader
 import tensorflow as tf
 import statistics as stat
+from sklearn import preprocessing
+from sklearn.preprocessing import MinMaxScaler
+from torch.utils.data import TensorDataset, DataLoader
+
 """ FUNKCIJE KOJE SE KORISTE U OKVIRU PROCEDURE """
+
+
 def podeli(x,y):
     try:
         return x/y
@@ -80,9 +87,6 @@ Ptt1=0.01428571
 Ptt2=0.257142857
 Ptt3=0.728571429
 
-
-# broj_sekundi_u_godini=31536000
-# broj_sekundi_u_godini = 7948800
 """ INICIJALNE VREDNOSTI PARAMETARA """
 
 VrRb=0
@@ -159,22 +163,85 @@ STt="11"
 STt1="11"
 STt2="11"
 STt3="11"
-	
+
+vreme_simulacije = 259200 # duzina test seta ( 6 meseci )
+
 brR=0
-vreme_simulacije = 302400 # duzina test seta ( 7 meseci )
+
 vremena_otkaza = []
 vremena_popravke = []
+
+""" POCETAK PROGRAMA """ 
+
+
+class LSTMNet(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, n_layers, drop_prob=0.2):
+        super(LSTMNet, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+
+        self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=True, dropout=drop_prob)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.relu = nn.ReLU()
+
+    def forward(self, x, h):
+        out, h = self.lstm(x, h)
+        out = self.fc(self.relu(out[:, -1]))
+        return out, h
+
+    def init_hidden(self, batch_size):
+        weight = next(self.parameters()).data
+        hidden = (weight.new(self.n_layers, 1, self.hidden_dim).zero_().to(device),
+                  weight.new(self.n_layers, 1, self.hidden_dim).zero_().to(device))
+        return hidden
+    
+def evaluate(model, test_loader):
+    model.eval()
+    model.to(device)
+    outputs = []
+    targets = []
+    loss = []
+    h = model.init_hidden(1)
+    for test_x, test_y in test_loader:
+        out, h = model(test_x.to(device).float(), h)
+        outputs.append(out.cpu().detach().numpy())
+        targets.append(test_y.numpy())
+
+    outputs = np.array(outputs).reshape(-1,2)
+    targets = np.array(targets).reshape(-1,2)
+    loss =np.array(tf.keras.losses.MSE(targets,outputs)).reshape(-1,1)
+    Loss = sum(loss)/len(loss)
+    print("Validation loss: {}".format(Loss))
+    return outputs, targets, Loss
+
+def evaluate_future_pred(model,testX, testY):
+    model.eval()
+    Loss = []
+    prediction = []
+    criterion = nn.MSELoss()
+    h = model.init_hidden(1)
+    for i in range(len(testY)):
+        test_X = testX[i]
+        test_X = np.expand_dims(test_X, axis=0)
+        test_X = torch.from_numpy(test_X)
+        test_Y = trainY[i]
+        test_Y = np.expand_dims(test_Y, axis=0)
+        test_Y = torch.from_numpy(test_Y)
+        out, h = model(test_X.to(device).float(), h)
+        loss = criterion(out, test_Y.to(device).float())
+        Loss.append(loss.item())
+        if i == (len(testY)-1): continue
+        testX[i+1] = testX[i] 
+        testX[i+1][-1] = out.cpu().detach().numpy()    
+        prediction.append(out.cpu().detach().numpy())
+    print("Validation loss: {}".format(sum(Loss)/len(Loss)))
+    return prediction
 
 df = pd.read_excel("Zastoji.xlsx", index_col=0)
 df = df[df["Sistem"] == "BTD SchRs-800"]
 df = df.sort_values(by=['Početak zastoja'])
 
 df = df[['Pocetak_zastoja_u_minutima', 'Vreme_zastoja', 'Vreme_rada']]
-
-k = int(len(df['Vreme_zastoja']))
-i = 0
-
-df.reset_index(inplace=True, drop=True)
 
 lista = []
 lista1 = []
@@ -187,13 +254,9 @@ podatci = np.array(lista)
 podatci = podatci.reshape(-1, 1)
 podatci1 = np.array(lista)
 podatci1 = podatci1.reshape(-1, 1)
-#datax =  sc.fit_transform(podatci1)
 
 datay = podatci
 datax = podatci1
-#datax = preprocessing.normalize(datax)
-
-# Obtaining the Scale for the labels(usage data) so that output can be re-scaled to actual value during evaluation
 
 def sliding_windows(datax, datay, seq_length):
     x = []
@@ -201,56 +264,43 @@ def sliding_windows(datax, datay, seq_length):
     for i in range( int(len(datax) - seq_length - 2)):
         if (i % 2) != 0: continue
         _x = datax[i:(i + seq_length)]
+#        _x = preprocessing.normalize(_x)
         _y = datay[i + seq_length]
         _y1 = datay[i + seq_length + 1]
         x.append(_x)
         y.append(_y)	
         y.append(_y1)	
     y = np.array(y)
-    x = np.array(x)
-    
+    x = np.array(x)        
     return x.reshape(len(x),int(seq_length/2),2), y.reshape(len(x),2)
 
-timesteps = 50
-x,y = sliding_windows(datax, datay, timesteps)
-
+x,y = sliding_windows(datax, datay, 50)   
 
 train_size = int(len(y) * 0.8)
 test_size = len(y) - train_size
- 			
+			
+dataX = np.array(x)
+dataY = np.array(y)
 trainX = np.array(x[0:train_size])			
 trainY = np.array(y[0:train_size])
-#reshape outputs into (samples, timesteps, features) 	
-trainY	= np.expand_dims(trainY, axis=1)	
-
+			
 testX = np.array(x[train_size:len(x)])
 testY = np.array(y[train_size:len(y)])
-#reshape outputs into (samples, timesteps, features) 	
-testY	= np.expand_dims(testY, axis=1)	
 
-time = np.arange(len(x))
-time_train = time[:train_size]
-time_valid = time[train_size:]
-
-train_dataset = tf.data.Dataset.from_tensor_slices((trainX, trainY))
-test_dataset = tf.data.Dataset.from_tensor_slices((testX, testY))
-batch_size = 32
-train_dataset = train_dataset.batch(batch_size)
-test_dataset = test_dataset.batch(batch_size)
-
-path = 'Models\LSTM encoder_decoder Multivere Timeseries.pt'
-LSTM_model = tf.keras.models.load_model(path) #loading model
-
-prediction = LSTM_model.predict(testX) #predicting faliures and repairs 
-prediction = prediction.reshape(prediction.shape[0], prediction.shape[2]) 
-
-repair_len =  trainY[:,:,0].reshape(-1) #select only repair len
+repair_len =  trainY[:,0].reshape(-1) #select only repair len
 repair_len = [i for i in repair_len if i <= 1500] #drop outliers
 stdev_repair = stat.stdev(repair_len) #standar diviation
 
-working_len =  trainY[:,:,1].reshape(-1)
+working_len =  trainY[:,1].reshape(-1)
 working_len = [i for i in working_len if i <= 2000] #drop outliers
-stdev_work = stat.stdev(working_len) #standar diviation
+stdev_work = stat.stdev(working_len) #standar diviation		
+
+# 			#Data loader
+# batch_size = 128		
+# train_data = TensorDataset(torch.from_numpy(trainX), torch.from_numpy(trainY))
+# train_loader = DataLoader(train_data, shuffle=False, batch_size=batch_size, drop_last=True)
+# test_data = TensorDataset(torch.from_numpy(testX), torch.from_numpy(testY))
+# test_loader = DataLoader(test_data, shuffle=False, batch_size=1, drop_last=True)
 
 is_cuda = torch.cuda.is_available()
 
@@ -259,6 +309,14 @@ if is_cuda:
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
+    
+PATH = "Models/2features predict 2 outputs (update after each example).pt"
+lstm_model = torch.load(PATH)
+lstm_model.eval()
+prediction = evaluate_future_pred(lstm_model, testX, testY)
+
+prediction = np.array(prediction).reshape(-1,2)
+print('pred_shape: {}'.format(prediction.shape))
 
 counter = 0
 tp0 = np.random.normal(prediction[counter][1], stdev_work)
@@ -643,44 +701,8 @@ else:
 vremena_otkaza = np.asarray(vremena_otkaza)
 vremena_popravke = np.asarray(vremena_popravke)
    
-
-podatci1 = vremena_otkaza.reshape(-1)
-podatci2 = vremena_popravke.reshape(-1)
-
-def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
-    matrix = np.zeros(vreme_simulacije)
-    for i in podatci1:
-        matrix[int(i)] = 1        
-    matrix1 = np.zeros(vreme_simulacije)
-    for i in podatci2:
-        matrix1[int(i)] = 1  
-    lambd = []
-    mi = []    
-    start = 0
-    end = seq_len
-    for i in range(int((len(matrix)-seq_len)/t)):
-        ls = matrix[start:end]
-        lambd.append(sum(ls))
-        ls1 = matrix1[start:end]
-        mi.append(sum(ls1))
-        start += t
-        end += t
-    lambd.append(sum(matrix[-seq_len:]))
-    mi.append(sum(matrix1[-seq_len:]))
-    return lambd, mi
-        
-seq_leng = [15*24*60, 7*24*60, 30*24*60]
-dt = [15, 30, 60]
-
-for seq_len in seq_leng:
-    for t in dt:
-        lamb, mi =  gen_lambda_and_mi(podatci1,podatci2, int(seq_len), t)
-        mi_gen_simulacija = np.array(mi).reshape(-1, 1)
-        lamb_gen_simulacija = np.array(lamb).reshape(-1, 1)
-        sim_name_lam = 'Failure_rates_' + str(t) + 'dt_' + str(seq_len) + 'min_simulacija' + '.npy'
-        sim_name_mi = 'Repair_rates' + str(t) + 'dt' + str(seq_len) + 'min_simulacija' + '.npy'
-        np.save(sim_name_lam, lamb_gen_simulacija)
-        np.save(sim_name_mi +str(t), mi_gen_simulacija)   
+np.save('vremena_otkaza.npy', vremena_otkaza)
+np.save('vremena_popravke.npy', vremena_popravke)
 
     
     
