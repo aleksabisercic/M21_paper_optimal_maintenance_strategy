@@ -153,7 +153,7 @@ for num_neur in num_neurons_LSTM:
                   metrics=["mae"])
     #lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-3 / 10**(epoch / 40))
 
-    history = model.fit(trainX, trainY, batch_size=batch_size, validation_split=0.1, epochs=200) # , callbacks=[lr_schedule])
+    history = model.fit(trainX, trainY, batch_size=batch_size, validation_split=0.1, epochs=500) # , callbacks=[lr_schedule])
     
     # plt.semilogx(history.history["lr"], history.history["loss"])
     # plt.axis([1e-8, 1e-4, 0, 60])
@@ -167,7 +167,7 @@ for num_neur in num_neurons_LSTM:
     losses = tf.keras.losses.mean_absolute_error(for_test_y, final_forcast)
     LOSS = sum(losses)/len(losses)                                             
     
-    simulation_name = 'LSTM encoder_decoder' 
+    simulation_name = 'LSTM_encoder_decoder' 
     
     ws1.row(i).write(0, simulation_name + "_" + str(num_neur))
     ws1.row(i).write(1, history.history["loss"][-1])
@@ -176,6 +176,6 @@ for num_neur in num_neurons_LSTM:
     i = i + 1
 wb.save("Excel tabels (results)/"+ simulation_name + ".xls")
 path = simulation_name + str(num_neur) + '.pt'
-model.save('LSTM encoder_decoder.pt')
+model.save(simulation_name)
 print(history.history["loss"][-100:])
-    #new_model = tf.keras.models.load_model('modelLSTM/'+ simulation_name + '.pt') #loading model
+#new_model = tf.keras.models.load_model( simulation_name ) #loading model

@@ -238,7 +238,7 @@ batch_size = 32
 train_dataset = train_dataset.batch(batch_size)
 test_dataset = test_dataset.batch(batch_size)
 
-path = 'LSTM encoder_decoder Multivere Timeseries.pt'
+path = 'Models/LSTM encoder_decoder Multivere Timeseries.pt'
 LSTM_model = tf.keras.models.load_model(path) #loading model
 
 prediction = LSTM_model.predict(testX) #predicting faliures and repairs 
