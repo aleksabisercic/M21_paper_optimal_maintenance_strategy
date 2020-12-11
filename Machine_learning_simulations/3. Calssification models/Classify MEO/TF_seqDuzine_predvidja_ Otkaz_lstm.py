@@ -26,17 +26,15 @@ df = pd.read_excel("Zastoji.xlsx", index_col = 0)
 df = df[df["Sistem"] == "BTD SchRs-800"]
 df = df.sort_values(by = ['Početak zastoja'])
 
-df = df[['Vreme_zastoja', 'Vrsta_zastoja' ]]
+df = df[['Vreme_rada','Vreme_zastoja', 'Vrsta_zastoja' ]]
 df.reset_index(inplace = True, drop = True)
 
-
-df = df[df.Vreme_zastoja < 2000]
 
 lista = []
 lista1 = []
 
 for i in range (0,len(df.index)): #df['Vreme_zastoja']:
-	lista.append(df["Vreme_zastoja"].iloc[i])
+	lista.append(df["Vreme_rada"].iloc[i])
 	lista1.append(df["Vrsta_zastoja"].iloc[i])
 
 data_X = np.array(lista).reshape(-1,1)
@@ -78,8 +76,8 @@ x_train = x[:split]
 y_train = y[:split]
 x_valid = x[split:]
 y_valid = y[split:]
-batch_size = 32
-shuffle_buffer_size = 150
+batch_size = 8
+shuffle_buffer_size = 1
 
 model = tf.keras.models.Sequential([
     tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=-1),
