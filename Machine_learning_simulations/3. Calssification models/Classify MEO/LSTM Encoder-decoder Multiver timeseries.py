@@ -61,18 +61,18 @@ for i in range(0, len(df.index)):  # df['Vreme_zastoja']:
         df["Vrsta_zastoja"].iloc[i] = 2
     if df["Vreme_rada"].iloc[i] > 2000:
         continue
-    lista.append(df["Vrsta_zastoja"].iloc[i])
+    lista1.append(df["Vrsta_zastoja"].iloc[i])
     lista.append(df["Vreme_zastoja"].iloc[i])
 
 
-podatci = np.array(lista)
+podatci = np.array(lista1)
 podatci = podatci.reshape(-1, 1)
 podatci1 = np.array(lista)
 podatci1 = podatci1.reshape(-1, 1)
 #datax =  sc.fit_transform(podatci1)
 
 datay = podatci
-datax = podatci1
+datax = podatci.reshape(-1)
 #datax = preprocessing.normalize(datax)
 
 # Obtaining the Scale for the labels(usage data) so that output can be re-scaled to actual value during evaluation
@@ -81,7 +81,6 @@ def sliding_windows(datax, datay, seq_length):
     x = []
     y = []
     for i in range( int(len(datax) - seq_length - 2)):
-        if (i % 2) != 0: continue
         _x = datax[i:(i + seq_length)]
         _y = datay[i + seq_length]
         x.append(_x)
@@ -89,7 +88,7 @@ def sliding_windows(datax, datay, seq_length):
     y = np.array(y)
     x = np.array(x)
     
-    return x.reshape(len(x),int(seq_length/2),2), y.reshape(len(x),1)
+    return x.reshape(len(x),int(seq_length),1), y.reshape(len(x),1)
 
 timesteps = 50
 x,y = sliding_windows(datax, datay, timesteps)
@@ -119,7 +118,7 @@ time_valid = time[train_size:]
 
 train_dataset = tf.data.Dataset.from_tensor_slices((trainX, trainY))
 test_dataset = tf.data.Dataset.from_tensor_slices((testX, testY))
-batch_size = 32
+batch_size = 8
 train_dataset = train_dataset.batch(batch_size)
 test_dataset = test_dataset.batch(batch_size)
 
@@ -139,7 +138,7 @@ for num_neur in num_neurons_LSTM:
     model.add(tf.keras.layers.RepeatVector(n_outputs))
     model.add(tf.keras.layers.LSTM(num_neur, activation='relu', return_sequences=True))
     model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(num_neur/2, activation='relu')))
-    model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(3, activation='softmax')))
+    model.add(tf.keras.layers.Dense(3, activation='softmax'))
     
     optimizer = tf.keras.optimizers.Adam()
     model.compile(loss='sparse_categorical_crossentropy',
