@@ -670,7 +670,7 @@ def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
     return lambd, mi
         
 seq_leng = [15*24*60, 7*24*60, 30*24*60]
-dt = [15, 30, 60]
+dt = [10, 30, 60]
 
 for seq_len in seq_leng:
     for t in dt:
