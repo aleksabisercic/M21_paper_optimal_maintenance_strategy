@@ -26,29 +26,27 @@ df = pd.read_excel("Zastoji.xlsx", index_col = 0)
 df = df[df["Sistem"] == "BTD SchRs-800"]
 df = df.sort_values(by = ['Početak zastoja'])
 
-df = df[['Vreme_zastoja', 'Vrsta_zastoja' ]]
+df = df[['Vreme_zastoja','Objekat', 'Vrsta_zastoja' ]]
 df.reset_index(inplace = True, drop = True)
 
-
-df = df[df.Vreme_zastoja < 2000]
 
 lista = []
 lista1 = []
 
 for i in range (0,len(df.index)): #df['Vreme_zastoja']:
 	lista.append(df["Vreme_zastoja"].iloc[i])
-	lista1.append(df["Vrsta_zastoja"].iloc[i])
+	lista1.append(df["Objekat"].iloc[i])
 
 data_X = np.array(lista).reshape(-1,1)
 labels_raw = np.array(lista1)
 
 data_Y = []
 for label in labels_raw:
-    if label == 'Masinski':
+    if label == 'BAGER SchRs-800':
         data_Y.append(0)
-    elif label == 'Elektro':
+    elif label == 'DROBILANA':
         data_Y.append(1)
-    elif label == 'Ostalo':
+    else:
         data_Y.append(2)
 
 dataX = np.array(lista).reshape(-1)
@@ -83,7 +81,7 @@ shuffle_buffer_size = 150
 
 model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(50, input_shape=[window_size], activation="relu"),
-    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dropout(0.15),
     tf.keras.layers.Dense(35, activation="relu"), 
     tf.keras.layers.Dropout(0.15),
     tf.keras.layers.Dense(10, activation="relu"), 
@@ -93,7 +91,7 @@ model = tf.keras.models.Sequential([
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=tf.keras.optimizers.Adam(), metrics=['accuracy'])
 
-history = model.fit(x_train, y_train, batch_size=batch_size, epochs=500, shuffle=False)
+history = model.fit(x_train, y_train, batch_size=batch_size, epochs=250, shuffle=False)
 
 loss = history.history['loss']
 epochs = range(len(loss))
@@ -101,24 +99,24 @@ plt.plot(epochs, loss, 'b', label='Training Loss')
 plt.show()
 
 rnn_eval = model.evaluate(x_valid, y_valid)
+print(model.predict(x_valid)[-100:])
+# wb = xl.Workbook ()
+# ws1 = wb.add_sheet("DNN_seq_popravke_u_otk")
+# ws1_kolone = ["Ime simulacije", "Training L","Validation Loss","Validation accuracy(MAE)" ]
+# ws1.row(0).write(0, ws1_kolone[0])
+# ws1.row(0).write(1, ws1_kolone[1])
+# ws1.row(0).write(2, ws1_kolone[2])
+# ws1.row(0).write(3, ws1_kolone[3])
 
-wb = xl.Workbook ()
-ws1 = wb.add_sheet("DNN_seq_popravke_u_otk")
-ws1_kolone = ["Ime simulacije", "Training L","Validation Loss","Validation accuracy(MAE)" ]
-ws1.row(0).write(0, ws1_kolone[0])
-ws1.row(0).write(1, ws1_kolone[1])
-ws1.row(0).write(2, ws1_kolone[2])
-ws1.row(0).write(3, ws1_kolone[3])
+# simulation_name = 'TF_DNN_seq_popravke_predvidja_dropout otkaz' 
+# path =  simulation_name 
 
-simulation_name = 'TF_DNN_seq_popravke_predvidja_dropout otkaz' 
-path =  simulation_name 
+# ws1.row(1).write(0, simulation_name + "_" +'LSTM')
+# ws1.row(1).write(1, history.history["loss"][-1])
+# ws1.row(1).write(2, (rnn_eval[0]))
+# ws1.row(1).write(3, (str(rnn_eval[1])))
 
-ws1.row(1).write(0, simulation_name + "_" +'LSTM')
-ws1.row(1).write(1, history.history["loss"][-1])
-ws1.row(1).write(2, (rnn_eval[0]))
-ws1.row(1).write(3, (str(rnn_eval[1])))
-
-wb.save( simulation_name + ".xls")
+# wb.save( simulation_name + ".xls")
 
 
 # forecast = []
