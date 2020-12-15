@@ -80,7 +80,7 @@ def plot_series(time, series, format="-", start=0, end=None):
 
 
 # window_size = 20
-batch_size = 8
+batch_size = 16
 shuffle_buffer_size = 150
 
 # dataset = windowed_dataset(x_train, window_size, batch_size, shuffle_buffer_size)
@@ -93,7 +93,7 @@ model = tf.keras.models.Sequential([
 # optimizer = tf.keras.optimizers.SGD(lr=1e-8, momentum=0.9)
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=tf.keras.optimizers.Adam(), metrics=['accuracy'])
-history = model.fit(x_train, y_train, batch_size=batch_size, epochs=200, shuffle=False, validation_split=0.1)
+history = model.fit(x_train, y_train, batch_size=batch_size, epochs=150, shuffle=False, validation_split=0.1)
 
 loss = history.history['loss']
 epochs = range(len(loss))
@@ -101,6 +101,8 @@ plt.plot(epochs, loss, 'b', label='Training Loss')
 plt.show()
 
 rnn_eval = model.evaluate(x_valid, y_valid)
+model.predict(x_valid)
+
 simulation_name = 'LSTM_BTD_CLASS' 
 
 model.save(simulation_name)
