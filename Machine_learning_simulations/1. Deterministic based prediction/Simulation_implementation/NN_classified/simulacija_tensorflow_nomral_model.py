@@ -165,11 +165,13 @@ vreme_simulacije = 259200 #  6 meseci
 vremena_otkaza = []
 vremena_popravke = []
 
+'''Loading Deterministic Model and Data'''
+
 df = pd.read_excel("Zastoji.xlsx", index_col=0)
 df = df[df["Sistem"] == "BTD SchRs-800"]
 df = df.sort_values(by=['Početak zastoja'])
 
-df = df[['Pocetak_zastoja_u_minutima', 'Vreme_zastoja', 'Vreme_rada']]
+df = df[['Vrsta_zastoja', 'Pocetak_zastoja_u_minutima', 'Vreme_zastoja', 'Vreme_rada']]
 
 k = int(len(df['Vreme_zastoja']))
 i = 0
@@ -177,11 +179,12 @@ i = 0
 df.reset_index(inplace=True, drop=True)
 
 lista = []
-lista1 = []
+lista11 = []
 
 for i in range(0, len(df.index)):  # df['Vreme_zastoja']:
 	lista.append(df["Vreme_zastoja"].iloc[i])
 	lista.append(df["Vreme_rada"].iloc[i])
+	lista11.append(df["Vrsta_zastoja"].iloc[i])
 
 podatci = np.array(lista)
 podatci = podatci.reshape(-1, 1)
@@ -192,8 +195,6 @@ podatci1 = podatci1.reshape(-1, 1)
 datay = podatci
 datax = podatci1
 #datax = preprocessing.normalize(datax)
-
-# Obtaining the Scale for the labels(usage data) so that output can be re-scaled to actual value during evaluation
 
 def sliding_windows(datax, datay, seq_length):
     x = []
@@ -206,10 +207,10 @@ def sliding_windows(datax, datay, seq_length):
         x.append(_x)
         y.append(_y)	
         y.append(_y1)	
-    y = np.array(y)
-    x = np.array(x)
+    y = np.array(y).reshape(len(x),2)
+    x = np.array(x).reshape(len(x),int(seq_length/2),2)
     
-    return x.reshape(len(x),int(seq_length/2),2), y.reshape(len(x),2)
+    return x, y
 
 timesteps = 50
 x,y = sliding_windows(datax, datay, timesteps)
@@ -238,7 +239,7 @@ batch_size = 32
 train_dataset = train_dataset.batch(batch_size)
 test_dataset = test_dataset.batch(batch_size)
 
-path = 'Models\LSTM encoder_decoder Multivere Timeseries.pt'
+'''path = 'LSTM encoder_decoder Multivere Timeseries.pt'
 LSTM_model = tf.keras.models.load_model(path) #loading model
 
 prediction = LSTM_model.predict(testX) #predicting faliures and repairs 
@@ -262,7 +263,45 @@ else:
 
 counter = 0
 tp0 = np.random.normal(prediction[counter][1], stdev_work)
-tp0 = np.abs(np.round(tp0))
+tp0 = np.abs(np.round(tp0))'''
+
+'''Loading Class model and Data for it'''
+
+labels_raw = np.array(lista11)
+
+data_Y = []
+for label in labels_raw:
+    if label == 'Masinski':
+        data_Y.append(0)
+    elif label == 'Elektro':
+        data_Y.append(1)
+    elif label == 'Ostalo':
+        data_Y.append(2)
+
+dataX = np.array(data_Y).reshape(-1,1)
+dataY = np.array(data_Y).reshape(-1,1)
+def sliding_windows(datax, datay, seq_length):
+    x = []
+    y = []
+    for i in range( int(len(datax) - seq_length )):
+        _x = datax[i:(i + seq_length)]
+        _y = datay[i + seq_length ]
+        x.append(_x)
+        y.append(_y)	
+    return np.array(x),np.array(y)
+
+window_size = 50
+
+x,y = sliding_windows(dataX, dataY, window_size)
+split = int(0.8*len(x))
+x_test = x[split:]
+y_test = y[split:]
+path = 'Classification_model'
+class_model = tf.keras.models.load_model(path) #loading model
+
+MEO_prediction = class_model.predict(x_test) #predicting class of failure
+MEO_prediction = MEO_prediction.reshape(MEO_prediction.shape[0], 3) 
+
 Pvo1 = MEO_prediction[counter][1] #elektro
 Pvo2 = MEO_prediction[counter][0] #masinski
 Pvo3 = MEO_prediction[counter][2] #ostali
@@ -279,7 +318,7 @@ for t in range(1,vreme_simulacije,1):
             failure_type.append(1)
             VRotk="1"
             r1=np.random.uniform(low=0.0, high=1.0,size=None)            
-            if r1 < Pvs1:
+            if r1 < Peo1:
                 OBJeo = "1"
                 brOEb = brOEb + 1
                 STb = "21"
@@ -290,7 +329,7 @@ for t in range(1,vreme_simulacije,1):
                 STt1 = "12"
                 STt2 = "12"
                 STt3 = "12"            
-            elif r1 < (Pvs2+Pvs1):
+            elif r1 < (Peo2+Peo2):
                 OBJeo = "2"
                 brOEt1 = brOEt1 + 1
                 STt1 = "21"

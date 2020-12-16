@@ -12,6 +12,7 @@ import torch.nn as nn
 from tick.plot import plot_point_process
 from tick.hawkes import SimuInhomogeneousPoisson
 from torch.utils.data import TensorDataset, DataLoader
+from sklearn.metrics import mean_squared_error
 
 class LSTMNet(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, n_layers, drop_prob=0.2):
@@ -33,100 +34,110 @@ class LSTMNet(nn.Module):
         hidden = (weight.new(self.n_layers, batch_size, self.hidden_dim).zero_(),
                   weight.new(self.n_layers, batch_size, self.hidden_dim).zero_())
         return hidden
-is_cuda = torch.cuda.is_available()
 
+def predict(model, test_loader):
+    model.eval()
+    outputs = []
+    targets = []
+    h = model.init_hidden(1)
+    for test_x, test_y in test_loader:
+        out, h = model(test_x.to(device).float(), h)
+        outputs.append(abs(out.cpu().detach().numpy()))
+        targets.append(test_y.numpy())
+    outc = np.array(outputs).reshape(-1)
+    tar = np.array(targets).reshape(-1)
+    Loss = mean_squared_error(tar, outc)	
+    print("Validation loss: {}".format(Loss))
+    return outputs
+
+is_cuda = torch.cuda.is_available()
 # If we have a GPU available, we'll set our device to GPU. We'll use this device variable later in our code.
 if is_cuda:
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
     
-#PATH = "Mi_model.pt"
 PATH = 'μ(t)(Repair rate)_LSTM_GRU_RNN.pt'
 Path = "λ(t)(failure rate)_LSTM_GRU_RNN.pt"
-model = torch.load(PATH)
+model_mi = torch.load(PATH)
 model_lambda = torch.load(Path)
 
-#Numpy λ(t) and μ(t)
+#Numpy λ(t) and μ(t) loading and generating datasets
+def sliding_windows(datax, datay, seq_length):
+    x = []
+    y = []
+    for i in range(len(datax) - seq_length - 1):
+        _x = datax[i:(i + seq_length)]
+        _y = datay[i + seq_length]
+        x.append(_x)
+        y.append(_y)			
+    return np.array(x), np.array(y)
 
-series_mi = np.load('Numpy λ(t) and μ(t)/Repair_rates_for_NN.npy')
+#μ(t) Repair_rates
+mi = np.load('Numpy λ(t) and μ(t)/Repair_rates_for_NN.npy') #Repair_rates dt(step) = 30min (step),  window = 21600min
 
-series_faliur = series.reshape(-1) 
-split_time = int(len(series_faliur)*0.8)
-time = np.arange(len(series_faliur))
-time_train = time[:split_time]
-x_train = series_faliur[:split_time]
-time_valid = time[split_time:]
-x_valid = series_faliur[split_time:]
+dataY = np.array(mi).reshape(-1, 1)
+dataX = np.array(mi).reshape(-1, 1)
 
-popravke_prethodni = popravke_prethodni[0]
-otkazi_prethodni = np.load('aleksa_lambda_proba.npy' )
-Y = np.load('testY_podatci_za_predvidjanje_mi.npy')
-#test_data = TensorDataset(torch.from_numpy(popravke_prethodni), torch.from_numpy(Y))
-#test_loader = DataLoader(test_data, shuffle=False, batch_size=Y.shape[0], drop_last=True)
+x, y = sliding_windows(dataX, dataY, 50)	
+train_size = int(len(y) * 0.8)
+test_size = len(y) - train_size
+testX = np.array(x[train_size:])
+testY = np.array(y[train_size:])
 
-#otkazi_prethodni = otkazi_prethodni[0]
-mi_ls = []
-lam_ls = []
-run_time =  259200 # duzina test seta ( 6 meseci )
-max_tim = run_time
+#Data loader
+test_data_mi = TensorDataset(torch.from_numpy(testX), torch.from_numpy(testY))
+test_loader_mi = DataLoader(test_data_mi, shuffle=False, batch_size=1, drop_last=True)
 
-def evaluate(model, test_loader):
-    model.eval()
-    outputs = []
-    targets = []
-    loss = []
-    h = model.init_hidden(Y.shape[0])
-    for test_x, test_y in test_loader:
-        out, h = model(test_x.to(device).float(), h)
-        outputs.append(out.cpu().detach().numpy())
-        targets.append(test_y.numpy())
-    for i in range(len(test_x)):
-        MSEloss = (outputs[0][i]-targets[0][i])**2
-        loss.append(MSEloss)
-    Loss = sum(loss)/len(loss)	
-    print("Validation loss: {}".format(Loss))
-    return outputs, targets, Loss
+mi_ls = predict(model_mi, test_loader_mi) #μ(t) Repair_rates predictions list
+mi_ls = np.array(mi_ls).reshape(-1)
+
+#λ(t) Failure_rates 
+lamb = np.load('Numpy λ(t) and μ(t)/Failure_rates_for_NN.npy')
+dataY = np.array(lamb).reshape(-1, 1)
+dataX = np.array(lamb).reshape(-1, 1)
+
+x, y = sliding_windows(dataX, dataY, 50)	
+train_size = int(len(y) * 0.8)
+test_size = len(y) - train_size
+testX = np.array(x[train_size:])
+testY = np.array(y[train_size:])
+
+#Data loader
+test_data_lamb = TensorDataset(torch.from_numpy(testX), torch.from_numpy(testY))
+test_loader_lamb = DataLoader(test_data_lamb, shuffle=False, batch_size=1, drop_last=True)
+
+lam_ls = predict(model_lambda, test_loader_mi) #λ(t) Failure_rates predictions list
+lam_ls = np.array(mi_ls).reshape(-1)
 
 
+run_time = int(len(lam_ls)*30) # len in minutes of test seta (step is 30min)
+max_tim = int(len(lam_ls)*30) 
+print('max_time {}min'.format(max_tim))
 
 def Lambda_interp(t,vreme,Lambda):
-    lambda_val = np.interp(t,vreme,Lambda)
-    return lambda_val
+    """
+    Interp Failure rates and Repair rates
+    """
+    return np.interp(t,vreme,Lambda)
 
 def generate_times_opt(max_t, delta, vreme, Lambda):
-    time = np.arange(delta,max_t, delta)
-   
-    lamb_val_t = Lambda_interp(time,vreme,Lambda) 
-    
+    time = np.arange(delta,max_t, delta)       
+    lamb_val_t = Lambda_interp(time,vreme,Lambda)     
     tf = TimeFunction((time, lamb_val_t), dt=delta)
+    print('Funion_time {},\n lamb_val_t {},'.format(time.shape, lamb_val_t.shape))
     Psim = SimuInhomogeneousPoisson([tf], end_time = max_t, verbose = False)
     Psim.simulate()
     simulacija = Psim.timestamps 
     return simulacija[0]
 
-''' Generisemo lambda podatke '''
-for i in range(int(run_time/60)): 
-    lambda_dt = pred(model, popravke_prethodni)
-    mi_ls.append(int(lambda_dt))
-    popravke_prethodni = np.roll(popravke_prethodni, -1)
-    popravke_prethodni = popravke_prethodni.reshape(-1,1)
-    popravke_prethodni[-1] = lambda_dt
- 
-for i in range(int(run_time/60)): 
-    lambda_dt = pred(model_lambda, otkazi_prethodni)
-    lam_ls.append(int(lambda_dt))
-    otkazi_prethodni = np.roll(otkazi_prethodni, -1)
-    otkazi_prethodni = otkazi_prethodni.reshape(-1,1)
-    otkazi_prethodni[-1] = lambda_dt
-
 lam_ls = np.array(lam_ls).reshape(-1)
-lam_ls = lam_ls/15/24/60  
+lam_ls = lam_ls/(60*24*15) #get rates in minutes 
 
 mi_ls = np.array(mi_ls).reshape(-1)
-mi_ls = mi_ls/15/24/60     
+mi_ls = mi_ls/(60*24*15)   #get rates in minutes 
 
-delta = 30                                         #dt na koj gledamo u simulaciji
+delta = 30  #dt (step)
 
 otkazi = [] #prvi clan iz simulacije, a sledeci je mi[-1] + Prvi izlaz iz simulacije
 popravke = []
@@ -134,7 +145,6 @@ popravke = []
 try:
     while True:
         vreme_lam =  np.linspace(0, run_time, lam_ls.shape[0]) # instance za koje imamo lambda 
-        vreme_mi =  np.linspace(0, run_time, mi_ls.shape[0]) # instance za koje imamo lambda
         time = np.arange(delta,run_time, delta)   
         
         #kako se generisu otkazi posle
@@ -145,11 +155,17 @@ try:
         simulacija_lambd = Psim.timestamps 
         array_lam = np.array(simulacija_lambd)
         array_lam = array_lam.reshape(-1)
+        print('Funion_time {},\n lamb_val_t {},'.format(time.shape, lamb_val_t.shape))
+        update_array_mi = int(array_lam[0]/30) # proveri, da li delim sa dt=30
+        mi_ls = mi_ls[update_array_mi:]
+        run_time = run_time - array_lam[0]
+        print('Funion_time_update {},\n mi_val_t_update {},'.format(time.shape, lamb_val_t.shape))
         if not popravke:
             otkazi.append(int(array_lam[0]))
         else:
             otkazi.append(int(array_lam[0] + popravke[-1]))
-            
+
+        vreme_mi =  np.linspace(0, run_time, mi_ls.shape[0]) # instance za koje imamo lambda
         mi_val_t = Lambda_interp(time,vreme_mi,mi_ls) 
         tf = TimeFunction((time, mi_val_t), dt=delta)
         Psim = SimuInhomogeneousPoisson([tf], end_time = run_time, verbose = False)
@@ -161,12 +177,16 @@ try:
         
         update_array = int(array_mi[0]/30)
         lam_ls = lam_ls[update_array:]
-        mi_ls = mi_ls[update_array:]
         
         run_time = max_tim - popravke[-1]
 except: 
-    print(otkazi)
-    print(popravke)
+   print(otkazi)
+   print(popravke)
+
+
+
+
+
 
 # nova_lista = []
 # simulacija_lambd = np.array(simulacija_lambd).reshape(-1)

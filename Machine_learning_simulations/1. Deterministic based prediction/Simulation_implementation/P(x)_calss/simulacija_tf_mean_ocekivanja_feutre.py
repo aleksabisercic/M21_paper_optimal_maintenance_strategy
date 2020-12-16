@@ -12,7 +12,7 @@ Created on Thu Apr 30 23:46:46 2020
 @author: Freedom
 """
 import numpy as np
-from scipy.optimize import fsolve
+#from scipy.optimize import fsolve
 import torch
 import torch.nn as nn
 import pandas as pd
