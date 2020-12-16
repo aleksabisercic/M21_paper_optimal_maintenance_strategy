@@ -33,39 +33,39 @@ vreme_ispisa = 5000
 
 """ PARAMETRI KOJI SE NE MENJAJU """ 
 
-Lbe=0.0000669323/60 #prebacio oz min u sec
-Lbm=0.0000433066/60
-Lbo=0.000073458/60
-Ldo=0.0000588205/60
-Lt1e=0.0000680535/60
-Lt1m=0.0000531802/60
-Lt1=0.000121234/60
-Lt2e=0.0000564661/60
-Lt2m=0.000059579/60
-Lt2=0.000116045/60
-lambda_t3e=0.000144174/60
-Lt3m=0.0000758069/60
-Ltxo=0.0000913767/60
-mbe=0.00027154/60 #Proveri da li si lepo sracunao(podelio sa 60)
-mbm=0.000474394/60
-mbo=0.0000731771/60
-mb=0.000323161/60
-mdo=0.000226708/60
-mt1e=0.000393955/60
-mt1m=0.000817231/60
-mt2e=0.000445557/60
-mt2m=0.00090446/60
-mt3e=0.000534383/60
-mt3m=0.000627307/60
-mtxo=0.000385339/60
-Lb=0.000183697/60
-Ld=0.0000588205/60
-Ltx=0.000548637/60
-L_btd=0.000791154/60
-Pvo1=0.18988903
-Pvo2=0.36405672
-Pvo3=0.446054254
-Peo1=0.42532468 #stavi na pocetak ne menjaju
+# Lbe=0.0000669323/60 #prebacio oz min u sec
+# Lbm=0.0000433066/60
+# Lbo=0.000073458/60
+# Ldo=0.0000588205/60
+# Lt1e=0.0000680535/60
+# Lt1m=0.0000531802/60
+# Lt1=0.000121234/60
+# Lt2e=0.0000564661/60
+# Lt2m=0.000059579/60
+# Lt2=0.000116045/60
+# lambda_t3e=0.000144174/60
+# Lt3m=0.0000758069/60
+# Ltxo=0.0000913767/60
+# mbe=0.00027154/60 #Proveri da li si lepo sracunao(podelio sa 60)
+# mbm=0.000474394/60
+# mbo=0.0000731771/60
+# mb=0.000323161/60
+# mdo=0.000226708/60
+# mt1e=0.000393955/60
+# mt1m=0.000817231/60
+# mt2e=0.000445557/60
+# mt2m=0.00090446/60
+# mt3e=0.000534383/60
+# mt3m=0.000627307/60
+# mtxo=0.000385339/60
+# Lb=0.000183697/60
+# Ld=0.0000588205/60
+# Ltx=0.000548637/60
+# L_btd=0.000791154/60
+# Pvo1=0.18988903
+# Pvo2=0.36405672
+# Pvo3=0.446054254
+Peo1=0.42532468 
 Peo2=0.02435065
 Peo3=0.1461039
 Peo4=0.40422078
@@ -78,7 +78,7 @@ Poo2=0.840359364201797
 Poo3=0.0483759502418798
 Ptt1=0.01428571
 Ptt2=0.257142857
-Ptt3=0.728571429
+Ptt3=0.728571429 # ctrl+k+c or shift+alt+a
 
 
 # broj_sekundi_u_godini=31536000
@@ -161,7 +161,7 @@ STt2="11"
 STt3="11"
 	
 brR=0
-vreme_simulacije = 302400 # duzina test seta ( 7 meseci )
+vreme_simulacije = 259200 #  6 meseci 
 vremena_otkaza = []
 vremena_popravke = []
 
@@ -263,17 +263,23 @@ else:
 counter = 0
 tp0 = np.random.normal(prediction[counter][1], stdev_work)
 tp0 = np.abs(np.round(tp0))
+Pvo1 = MEO_prediction[counter][1] #elektro
+Pvo2 = MEO_prediction[counter][0] #masinski
+Pvo3 = MEO_prediction[counter][2] #ostali
 
+''' Pvs1 = MEO_prediction[counter][0] #bager 
+Pvs2 = MEO_prediction[counter][1] #drobilana
+Pvs3 = MEO_prediction[counter][2] #trakasti ''' #ja bih izbacio ovo
+failure_type = []
 for t in range(1,vreme_simulacije,1):   
-    if t == tp0:
-        
+    if t == tp0:        
         brR = brR + 1
         r = np.random.uniform(low=0.0, high=1.0,size=None)
         if r < Pvo1:
+            failure_type.append(1)
             VRotk="1"
-            r1=np.random.uniform(low=0.0, high=1.0,size=None)
-            
-            if r1 < Peo1:
+            r1=np.random.uniform(low=0.0, high=1.0,size=None)            
+            if r1 < Pvs1:
                 OBJeo = "1"
                 brOEb = brOEb + 1
                 STb = "21"
@@ -283,9 +289,8 @@ for t in range(1,vreme_simulacije,1):
                 STd = "12"
                 STt1 = "12"
                 STt2 = "12"
-                STt3 = "12"
-            
-            elif r1 < (Peo1+Peo2):
+                STt3 = "12"            
+            elif r1 < (Pvs2+Pvs1):
                 OBJeo = "2"
                 brOEt1 = brOEt1 + 1
                 STt1 = "21"
@@ -321,6 +326,7 @@ for t in range(1,vreme_simulacije,1):
                 STt2 = "12"
                 STb = "12"
         elif r < (Pvo1+Pvo2):
+            failure_type.append(2)
             Vrotk="2"
             r2=np.random.uniform(low=0.0, high=1.0,size=None)
             if r2<Pmo1:
@@ -369,6 +375,7 @@ for t in range(1,vreme_simulacije,1):
                 STb = "12"
 
         elif r <= 1: 
+            failure_type.append(2)
             Vrotk = "3"
             r3=np.random.uniform(low=0.0, high=1.0,size=None)
             if r3 < Poo1:
@@ -444,7 +451,10 @@ for t in range(1,vreme_simulacije,1):
         tp0 = np.abs(np.round(tp0))
         tp0 = t + tp0
         vremena_otkaza.append(tp0)
-		
+        Pvo1 = MEO_prediction[counter][1]
+        Pvo2 = MEO_prediction[counter][0]
+        Pvo3 = MEO_prediction[counter][2]
+
     if STb == '11':
         VrRb = VrRb + 1
         VrRADb = VrRADb + 1
@@ -539,106 +549,106 @@ else:
     print(VrRt1, VrRt2, VrRt3)
     print("Greska_Kraj")
 
-# """ RACUNANJE STATISTIKA ZA JEDNU SIMULACIJU """
-# #bager statistika
+""" RACUNANJE STATISTIKA ZA JEDNU SIMULACIJU """
+#bager statistika
 
-# SrVrRb = podeli(VrRb,brR) 
-# SrVrCnRb = podeli(VrCnRb, brCnRb)
-# SrVrRADb = podeli(VrRADb, (brR + brCnRb))
-# SrVrOEb = podeli(VrOEb, brOEb)
-# SrVrOMb = podeli(VrOMb,brOMb)
-# SrVrOOb = podeli(VrOOb,brOOb)
-# brOTKb = brOEb + brOMb + brOOb
-# SrVrOTKb = podeli(VrOTKb, brOTKb)
-# Ab = VrRADb / ( VrRADb + VrOTKb )
-# Aeb = VrRADb / ( VrRADb + VrOEb )
-# Amb = VrRADb / ( VrRADb + VrOMb )
-# Aob = VrRADb / ( VrRADb + VrOOb )
+SrVrRb = podeli(VrRb,brR) 
+SrVrCnRb = podeli(VrCnRb, brCnRb)
+SrVrRADb = podeli(VrRADb, (brR + brCnRb))
+SrVrOEb = podeli(VrOEb, brOEb)
+SrVrOMb = podeli(VrOMb,brOMb)
+SrVrOOb = podeli(VrOOb,brOOb)
+brOTKb = brOEb + brOMb + brOOb
+SrVrOTKb = podeli(VrOTKb, brOTKb)
+Ab = VrRADb / ( VrRADb + VrOTKb )
+Aeb = VrRADb / ( VrRADb + VrOEb )
+Amb = VrRADb / ( VrRADb + VrOMb )
+Aob = VrRADb / ( VrRADb + VrOOb )
 
-# #drobilica statistika
+#drobilica statistika
 
-# SrVrRd = podeli(VrRd, brR) 
-# SrVrCnRd = podeli(VrCnRd, brCnRd)
-# SrVrRADd = podeli(VrRADd, ( brR + brCnRd ))
-# SrVrOOd = podeli(VrOOd, brOOd)
-# brOTKd =  brOOd
-# SrVrOTKd = podeli(VrOTKd, brOTKd)
-# SrVrOOd = podeli(VrOOd, brOOd)
-# SrVrOTKd = SrVrOOd
-# Ad = VrRADd / ( VrRADd + VrOTKd )
-# Aod = VrRADd / ( VrRADd + VrOOd )
+SrVrRd = podeli(VrRd, brR) 
+SrVrCnRd = podeli(VrCnRd, brCnRd)
+SrVrRADd = podeli(VrRADd, ( brR + brCnRd ))
+SrVrOOd = podeli(VrOOd, brOOd)
+brOTKd =  brOOd
+SrVrOTKd = podeli(VrOTKd, brOTKd)
+SrVrOOd = podeli(VrOOd, brOOd)
+SrVrOTKd = SrVrOOd
+Ad = VrRADd / ( VrRADd + VrOTKd )
+Aod = VrRADd / ( VrRADd + VrOOd )
 
-# #Trakasti transporteri statistika
-# SrVrRt = podeli(VrRt, brR)
-# SrVrCnRt = podeli(VrCnRt, brCnRt)
-# SrVrRADt = VrRADt / ( brR + brCnRt )
-# SrVrOTKt = podeli(VrOTKt, brOTKt)
-# At = VrRADt / ( VrRADt + VrOTKt )
+#Trakasti transporteri statistika
+SrVrRt = podeli(VrRt, brR)
+SrVrCnRt = podeli(VrCnRt, brCnRt)
+SrVrRADt = VrRADt / ( brR + brCnRt )
+SrVrOTKt = podeli(VrOTKt, brOTKt)
+At = VrRADt / ( VrRADt + VrOTKt )
 
-# #Trakasti transporter 1 stat.
-# brCnRt1 = brOTKb + brOTKd + brOEt2 + brOMt2 + brOOt2 + brOEt3 + brOMt3 + brOOt3
-# SrVrRt1 = podeli(VrRt1, brR) 
-# SrVrCnRt1 = podeli(VrCnRt1, brCnRt1)
-# SrVrRADt1 = podeli(VrRADt1, ( brR + brCnRt1 ))
-# SrVrOEt1 = podeli(VrOEt1, brOEt1) # ovde mi izbacuje gresku deljenje sa nulom ali moguce da nije doslo do otkaza Elektro motora T1
-# SrVrOMt1 = podeli(VrOMt1, brOMt1)
-# SrVrOOt1 = podeli(VrOOt1, brOOt1)
-# brOTKt1 = brOEt1 + brOMt1 + brOOt1
-# SrVrOTKt1 = podeli(VrOTKt1, brOTKt1)
-# At1 = VrRADt1 / ( VrRADt1 + VrOTKt1 )
-# Aet1 = VrRADt1 / ( VrRADt1 + VrOEt1 )
-# Amt1 = VrRADt1 / ( VrRADt1 + VrOMt1 )
-# Aot1 = VrRADt1 / ( VrRADt1 + VrOOt1 )
+#Trakasti transporter 1 stat.
+brCnRt1 = brOTKb + brOTKd + brOEt2 + brOMt2 + brOOt2 + brOEt3 + brOMt3 + brOOt3
+SrVrRt1 = podeli(VrRt1, brR) 
+SrVrCnRt1 = podeli(VrCnRt1, brCnRt1)
+SrVrRADt1 = podeli(VrRADt1, ( brR + brCnRt1 ))
+SrVrOEt1 = podeli(VrOEt1, brOEt1) # ovde mi izbacuje gresku deljenje sa nulom ali moguce da nije doslo do otkaza Elektro motora T1
+SrVrOMt1 = podeli(VrOMt1, brOMt1)
+SrVrOOt1 = podeli(VrOOt1, brOOt1)
+brOTKt1 = brOEt1 + brOMt1 + brOOt1
+SrVrOTKt1 = podeli(VrOTKt1, brOTKt1)
+At1 = VrRADt1 / ( VrRADt1 + VrOTKt1 )
+Aet1 = VrRADt1 / ( VrRADt1 + VrOEt1 )
+Amt1 = VrRADt1 / ( VrRADt1 + VrOMt1 )
+Aot1 = VrRADt1 / ( VrRADt1 + VrOOt1 )
 
-# #Trakasti transporter 2 stat.
+#Trakasti transporter 2 stat.
 
-# brCnRt2 = brOTKb + brOTKd + brOEt1 + brOMt1 + brOOt1 + brOEt3 + brOMt3 + brOOt3
-# SrVrRt2 = podeli(VrRt2, brR) 
-# SrVrCnRt2 = podeli(VrCnRt2, brCnRt2)
-# SrVrRADt2 = podeli(VrRADt2, ( brR + brCnRt2 ))
-# SrVrOEt2 = podeli(VrOEt2, brOEt2)
-# SrVrOMt2 = podeli(VrOMt2, brOMt2)
-# SrVrOOt2 = podeli(VrOOt2, brOOt2)
-# brOTKt2 = brOEt2 + brOMt2 + brOOt2
-# SrVrOTKt2 = podeli(VrOTKt2, brOTKt2)
-# At2 = VrRADt2 / ( VrRADt2 + VrOTKt2 )
-# Aet2 = VrRADt2 / ( VrRADt2 + VrOEt2 )
-# Amt2 = VrRADt2 / ( VrRADt2 + VrOMt2 )
-# Aot2 = VrRADt2 / ( VrRADt2 + VrOOt2 )
+brCnRt2 = brOTKb + brOTKd + brOEt1 + brOMt1 + brOOt1 + brOEt3 + brOMt3 + brOOt3
+SrVrRt2 = podeli(VrRt2, brR) 
+SrVrCnRt2 = podeli(VrCnRt2, brCnRt2)
+SrVrRADt2 = podeli(VrRADt2, ( brR + brCnRt2 ))
+SrVrOEt2 = podeli(VrOEt2, brOEt2)
+SrVrOMt2 = podeli(VrOMt2, brOMt2)
+SrVrOOt2 = podeli(VrOOt2, brOOt2)
+brOTKt2 = brOEt2 + brOMt2 + brOOt2
+SrVrOTKt2 = podeli(VrOTKt2, brOTKt2)
+At2 = VrRADt2 / ( VrRADt2 + VrOTKt2 )
+Aet2 = VrRADt2 / ( VrRADt2 + VrOEt2 )
+Amt2 = VrRADt2 / ( VrRADt2 + VrOMt2 )
+Aot2 = VrRADt2 / ( VrRADt2 + VrOOt2 )
 
-# #Trakasti transporter 2 stat.
+#Trakasti transporter 2 stat.
 
-# brCnRt3 = brOTKb + brOTKd + brOEt1 + brOMt1 + brOOt1 + brOEt2 + brOMt2 + brOOt2
-# SrVrRt3 = VrRt3 / brR 
-# SrVrCnRt3 = podeli(VrCnRt3, brCnRt3)
-# SrVrRADt3 = podeli(VrRADt3, ( brR + brCnRt3 ))
-# SrVrOEt3 = podeli(VrOEt3, brOEt3)
-# SrVrOMt3 = podeli(VrOMt3, brOMt3)
-# SrVrOOt3 = podeli(VrOOt3, brOOt3)
-# brOTKt3 = brOEt3 + brOMt3 + brOOt3
-# SrVrOTKt3 = podeli(VrOTKt3, brOTKt3)
-# At3 = VrRADt3 / ( VrRADt3 + VrOTKt3 )
-# Aet3 = VrRADt3 / ( VrRADt3 + VrOEt3 )
-# Amt3 = VrRADt3 / ( VrRADt3 + VrOMt3 )
-# Aot3 = VrRADt3 / ( VrRADt3 + VrOOt3 )
+brCnRt3 = brOTKb + brOTKd + brOEt1 + brOMt1 + brOOt1 + brOEt2 + brOMt2 + brOOt2
+SrVrRt3 = VrRt3 / brR 
+SrVrCnRt3 = podeli(VrCnRt3, brCnRt3)
+SrVrRADt3 = podeli(VrRADt3, ( brR + brCnRt3 ))
+SrVrOEt3 = podeli(VrOEt3, brOEt3)
+SrVrOMt3 = podeli(VrOMt3, brOMt3)
+SrVrOOt3 = podeli(VrOOt3, brOOt3)
+brOTKt3 = brOEt3 + brOMt3 + brOOt3
+SrVrOTKt3 = podeli(VrOTKt3, brOTKt3)
+At3 = VrRADt3 / ( VrRADt3 + VrOTKt3 )
+Aet3 = VrRADt3 / ( VrRADt3 + VrOEt3 )
+Amt3 = VrRADt3 / ( VrRADt3 + VrOMt3 )
+Aot3 = VrRADt3 / ( VrRADt3 + VrOOt3 )
 
-# #Statistika sistema
-# VrRbtd = VrRb #**proveriti
-# SrVrRbtd = podeli(VrRbtd, brR)
-# Abtd = VrRbtd / ( VrRbtd + VrOTKb + VrOTKd + VrOTKt)
-# 	#Statistika bt_sistema
-# SrVrRbt = SrVrRbtd 
-# VrRbt = VrRbtd
-# Abt = Abtd	
+#Statistika sistema
+VrRbtd = VrRb #**proveriti
+SrVrRbtd = podeli(VrRbtd, brR)
+Abtd = VrRbtd / ( VrRbtd + VrOTKb + VrOTKd + VrOTKt)
+	#Statistika bt_sistema
+SrVrRbt = SrVrRbtd 
+VrRbt = VrRbtd
+Abt = Abtd	
 
-# list_stat_B = [brCnRb, SrVrRb , SrVrCnRb , SrVrRADb , SrVrOEb , SrVrOMb , SrVrOOb , brOTKb , SrVrOTKb , Ab , Aeb , Aob , Amb]
-# list_stat_D = [brCnRd, SrVrRd , SrVrCnRd , SrVrRADd , SrVrOOd , brOTKd , SrVrOTKd ,  SrVrOOd , SrVrOTKd, Ad , Aod]
-# list_stat_T1 = [brCnRt1, SrVrRt1 , SrVrCnRt1 , SrVrRADt1 , SrVrOEt1 , SrVrOMt1 , SrVrOOt1 , brOTKt1 , SrVrOTKt1,  At1, Aet1 , Aot1 , Amt1]
-# list_stat_T2 = [brCnRt2, SrVrRt2, SrVrCnRt2, SrVrRADt2, SrVrOEt2, SrVrOMt2, SrVrOOt2, brOTKt2, SrVrOTKt2, At2, Aet2, Aot2, Amt2]
-# list_stat_T3 = [brCnRt3, SrVrRt3 , SrVrCnRt3 , SrVrRADt3 , SrVrOEt3 , SrVrOMt3 , SrVrOOt3 , brOTKt3 , SrVrOTKt3 , At3 , Aet3 , Aot3 , Amt3]
-# list_stat_T = [SrVrRt , SrVrCnRt , SrVrRADt , SrVrOTKt , At]
-# list_stat_BTD = [VrRbtd , SrVrRbtd , Abtd]
-# lista_stat_BT = [VrRbt , SrVrRbt , Abt]
+list_stat_B = [brCnRb, SrVrRb , SrVrCnRb , SrVrRADb , SrVrOEb , SrVrOMb , SrVrOOb , brOTKb , SrVrOTKb , Ab , Aeb , Aob , Amb]
+list_stat_D = [brCnRd, SrVrRd , SrVrCnRd , SrVrRADd , SrVrOOd , brOTKd , SrVrOTKd ,  SrVrOOd , SrVrOTKd, Ad , Aod]
+list_stat_T1 = [brCnRt1, SrVrRt1 , SrVrCnRt1 , SrVrRADt1 , SrVrOEt1 , SrVrOMt1 , SrVrOOt1 , brOTKt1 , SrVrOTKt1,  At1, Aet1 , Aot1 , Amt1]
+list_stat_T2 = [brCnRt2, SrVrRt2, SrVrCnRt2, SrVrRADt2, SrVrOEt2, SrVrOMt2, SrVrOOt2, brOTKt2, SrVrOTKt2, At2, Aet2, Aot2, Amt2]
+list_stat_T3 = [brCnRt3, SrVrRt3 , SrVrCnRt3 , SrVrRADt3 , SrVrOEt3 , SrVrOMt3 , SrVrOOt3 , brOTKt3 , SrVrOTKt3 , At3 , Aet3 , Aot3 , Amt3]
+list_stat_T = [SrVrRt , SrVrCnRt , SrVrRADt , SrVrOTKt , At]
+list_stat_BTD = [VrRbtd , SrVrRbtd , Abtd]
+lista_stat_BT = [VrRbt , SrVrRbt , Abt]
 
 vremena_otkaza = np.asarray(vremena_otkaza)
 vremena_popravke = np.asarray(vremena_popravke)
@@ -647,7 +657,7 @@ vremena_popravke = np.asarray(vremena_popravke)
 podatci1 = vremena_otkaza.reshape(-1)
 podatci2 = vremena_popravke.reshape(-1)
 
-def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
+'''def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
     matrix = np.zeros(vreme_simulacije)
     for i in podatci1:
         matrix[int(i)] = 1        
@@ -680,7 +690,7 @@ for seq_len in seq_leng:
         sim_name_lam = 'Failure_rates_' + str(t) + 'dt_' + str(seq_len) + 'min_simulacija' + '.npy'
         sim_name_mi = 'Repair_rates' + str(t) + 'dt' + str(seq_len) + 'min_simulacija' + '.npy'
         np.save(sim_name_lam, lamb_gen_simulacija)
-        np.save(sim_name_mi +str(t), mi_gen_simulacija)   
+        np.save(sim_name_mi +str(t), mi_gen_simulacija)  '''
 
     
     
