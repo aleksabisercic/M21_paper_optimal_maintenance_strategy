@@ -79,14 +79,14 @@ mi = np.load('Numpy λ(t) and μ(t)/Repair_rates_for_NN.npy') #Repair_rates dt(s
 dataY = np.array(mi).reshape(-1, 1)
 dataX = np.array(mi).reshape(-1, 1)
 
-x, y = sliding_windows(dataX, dataY, 50)	
-train_size = int(len(y) * 0.8)
-test_size = len(y) - train_size
-testX = np.array(x[train_size:])
-testY = np.array(y[train_size:])
+x_mi, y_mi = sliding_windows(dataX, dataY, 50)	
+train_size = int(len(y_mi) * 0.8)
+test_size = len(y_mi) - train_size
+testX_mi = np.array(x_mi[train_size:])
+testY_mi = np.array(y_mi[train_size:])
 
 #Data loader
-test_data_mi = TensorDataset(torch.from_numpy(testX), torch.from_numpy(testY))
+test_data_mi = TensorDataset(torch.from_numpy(testX_mi), torch.from_numpy(testY_mi))
 test_loader_mi = DataLoader(test_data_mi, shuffle=False, batch_size=1, drop_last=True)
 
 mi_ls = predict(model_mi, test_loader_mi) #μ(t) Repair_rates predictions list
@@ -107,8 +107,8 @@ testY = np.array(y[train_size:])
 test_data_lamb = TensorDataset(torch.from_numpy(testX), torch.from_numpy(testY))
 test_loader_lamb = DataLoader(test_data_lamb, shuffle=False, batch_size=1, drop_last=True)
 
-lam_ls = predict(model_lambda, test_loader_mi) #λ(t) Failure_rates predictions list
-lam_ls = np.array(mi_ls).reshape(-1)
+lam_ls = predict(model_lambda, test_loader_lamb) #λ(t) Failure_rates predictions list
+lam_ls = np.array(lam_ls).reshape(-1)
 
 
 run_time = int(len(lam_ls)*30) # len in minutes of test seta (step is 30min)
@@ -155,11 +155,11 @@ try:
         simulacija_lambd = Psim.timestamps 
         array_lam = np.array(simulacija_lambd)
         array_lam = array_lam.reshape(-1)
-        print('Funion_time {},\n lamb_val_t {},'.format(time.shape, lamb_val_t.shape))
+ #       print('Funion_time {},\n lamb_val_t {},'.format(time.shape, lamb_val_t.shape))
         update_array_mi = int(array_lam[0]/30) # proveri, da li delim sa dt=30
         mi_ls = mi_ls[update_array_mi:]
         run_time = run_time - array_lam[0]
-        print('Funion_time_update {},\n mi_val_t_update {},'.format(time.shape, lamb_val_t.shape))
+   #     print('Funion_time_update {},\n mi_val_t_update {},'.format(time.shape, lamb_val_t.shape))
         if not popravke:
             otkazi.append(int(array_lam[0]))
         else:
@@ -183,7 +183,46 @@ except:
    print(otkazi)
    print(popravke)
 
+vreme_simulacije = 259200 # duzina test seta ( 6 meseci )
+vremena_otkaza = np.array(otkazi)
+vremena_popravke = np.array(popravke)
+podatci1 = vremena_otkaza.reshape(-1)
+podatci2 = vremena_popravke.reshape(-1)
 
+def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
+    matrix = np.zeros(vremena_popravke[-1])
+    for i in podatci1:
+        matrix[int(i)] = 1        
+    matrix1 = np.zeros(vremena_popravke[-1] + 1)
+    for i in podatci2:
+        matrix1[int(i)] = 1  
+    lambd = []
+    mi = []    
+    start = 0
+    end = seq_len
+    for i in range(int((len(matrix)-seq_len)/t)):
+        ls = matrix[start:end]
+        lambd.append(sum(ls))
+        ls1 = matrix1[start:end]
+        mi.append(sum(ls1))
+        start += t
+        end += t
+    lambd.append(sum(matrix[-seq_len:]))
+    mi.append(sum(matrix1[-seq_len:]))
+    return lambd, mi
+        
+seq_leng = [15*24*60]
+dt = [30]
+
+for seq_len in seq_leng:
+    for t in dt:
+        lamb, mi =  gen_lambda_and_mi(podatci1,podatci2, int(seq_len), t)
+        mi_gen_simulacija = np.array(mi).reshape(-1, 1)
+        lamb_gen_simulacija = np.array(lamb).reshape(-1, 1)
+        sim_name_lam = 'Failure_rates_' + str(t) + 'dt_' + str(seq_len) + 'min_simulacija' + '.npy'
+        sim_name_mi = 'Repair_rates' + str(t) + 'dt' + str(seq_len) + 'min_simulacija' + '.npy'
+        np.save(sim_name_lam, lamb_gen_simulacija)
+        np.save(sim_name_mi +str(t), mi_gen_simulacija)
 
 
 
