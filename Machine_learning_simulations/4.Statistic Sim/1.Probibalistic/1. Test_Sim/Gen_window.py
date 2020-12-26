@@ -52,8 +52,8 @@ for i in range(2):
         1. We generate 3 matrix with len(len_of_simulation(in minutes))
         2.a) We put 1 in moment (minut) in which the event happend 
              and 0 otherwise (for repair and failure rates)
-        2.b) We put class of falilure in moment (minut) in which the event happend 
-             and 0 otherwise (for classification probability distribution)
+        2.b) We put class (1,2,3) of falilure in moment (minut) in which the event happend 
+             and 0 otherwise (for class of failures)
         3. We go through Matrixes with sliding_window (window size, and step) 
         '''
 
