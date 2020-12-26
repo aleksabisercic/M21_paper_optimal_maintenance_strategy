@@ -6,13 +6,22 @@ Created on Sun Dec  6 13:55:33 2020
 """
 import numpy as np 
 import matplotlib.pyplot as plt
+import time
+from sklearn.metrics import mean_squared_error
+import pandas as pd
 
 #Time of simulation
-vreme_simulacije = 259200 # len of  test ( 6 month period )
+vreme_simulacije = 259200 # len of  test in min ( 6 month period )
 
+#Load datasets from simulation
 vremena_otkaza = np.load('lista_vremena_otkz_1000_BTD.npy', allow_pickle=True)
 vremena_popravke = np.load('lista_vremena_pop_1000_BTD.npy', allow_pickle=True)
 vrsta_otkaza = np.load('lista_vrsta_pop_1000_BTD.npy', allow_pickle=True)
+
+#Load Real data
+Real_data_fail = np.load('lista_vremena_otkz_1000_BTD.npy', allow_pickle=True)
+Real_data_fail = np.load('lista_vremena_pop_1000_BTD.npy', allow_pickle=True)
+Real_data_class = np.load('lista_vrsta_pop_1000_BTD.npy', allow_pickle=True)
 
 for i in range(2):
     ls_ = []
@@ -41,7 +50,10 @@ for i in range(2):
         '''
         This Funcion consist of 3 parts:
         1. We generate 3 matrix with len(len_of_simulation(in minutes))
-        2. We fill in which moment (minut) the event happend
+        2.a) We put 1 in moment (minut) in which the event happend 
+             and 0 otherwise (for repair and failure rates)
+        2.b) We put class of falilure in moment (minut) in which the event happend 
+             and 0 otherwise (for classification probability distribution)
         3. We go through Matrixes with sliding_window (window size, and step) 
         '''
 
@@ -87,23 +99,39 @@ for i in range(2):
         return lambd, mi, fail_distribution
             
     seq_leng = [7*24*60, 15*24*60, 30*24*60] #windows of 7, 15 and 30 days
-    dt = [60] #step of 60 minutes
-
+    dt = [8*60] #step of 60 minutes
+    Results = []
     for seq_len in seq_leng:
         for t in dt:
             lamb, mi, fail_distribution =  gen_lambda_and_mi(podatci1,podatci2,podatci3, int(seq_len), t)
-            mi_gen_simulacija = np.array(mi).reshape(-1, 1)
+            mi_gen = np.array(mi).reshape(-1, 1)
             lamb_gen = np.array(lamb).reshape(-1, 1)
-            fail_distribution = np.asarray(fail_distribution)
-            print(fail_distribution.shape)
+            fail_distribution = np.array(fail_distribution).reshape(-1, 3)
+
+            #Optinal: Save into lists
             np.save('fail_window{}_dt{}_sim{}.npy'.format(seq_len/(24*60), t, i), lamb_gen)
             np.save('repair_window{}_dt{}_sim{}.npy'.format(seq_len/(24*60), t, i), lamb_gen)
             np.save('class_window{}_dt{}_sim{}.npy'.format(seq_len/(24*60), t, i), lamb_gen)
 
-
-
-
-
+            lis_ = []
+            #MSE/Evaluation of real vs predicted failure rate
+            len_tst_st = int(len(Real_data_fail)*0.8)
+            Test_data_fail = Real_data_fail[len_tst_st:len_tst_st + len(lamb_gen)].reshape(-1,1)
+            MSE_sim_f = mean_squared_error(Test_data_fail, Sim_data)
+            #MSE/Evaluation of real vs predicted repair rate
+            len_tst_st = int(len(Real_data_fail)*0.8)
+            Test_data_repair = Real_data_fail[len_tst_st:len_tst_st + len(mi_gen)].reshape(-1,1)
+            MSE_sim_r = mean_squared_error(Test_data_repair, Sim_data)
+            #KL_divergance/Evaluation KL_divergance for probability distribution
+            len_tst_st = int(len(Real_data_class)*0.8)
+            Test_data_class = Real_data_class[len_tst_st:len_tst_st + len(fail_distribution)]
+            res =[] 
+            for i in  range(len(p)):
+                kl_ = kl_div(p[i], q[i])
+                res.append(sum(kl_))
+            KL_div = np.mean(res)
+            #Append results in order 1. Failure_rate 2. Repair_rate 3. Class
+            Results.extend(MSE_sim_f, MSE_sim_r, KL_div)
 
 
 # sim_name_lam = 'Failure_rates_' + str(t) + 'dt_' + str(seq_len) + 'min_simulacija' + '.npy'
