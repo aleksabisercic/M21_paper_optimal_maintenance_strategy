@@ -13,7 +13,7 @@ df = pd.read_excel("Zastoji.xlsx", index_col=0)
 df = df[df["Sistem"] == "BTD SchRs-800"]
 df = df.sort_values(by=['Početak zastoja'])
 
-df = df[['Pocetak_zastoja_u_minutima', 'Vreme_zastoja', 'Vreme_rada', 'Kraj_zastoja_u_miutama']]
+df = df[['Pocetak_zastoja_u_minutima', 'Vreme_zastoja', 'Vreme_rada', 'Kraj_zastoja_u_miutama', 'Vrsta_zastoja']]
 
 k = int(len(df['Vreme_zastoja']))
 i = 0
@@ -22,7 +22,7 @@ df.reset_index(inplace=True, drop=True)
 
 lista2 = []
 lista1 = []
-
+lista3 = []
 for i in range(0, len(df.index)):  # df['Vreme_zastoja']:
 	if df["Vreme_zastoja"].iloc[i] > 75000:
 		continue
@@ -30,12 +30,22 @@ for i in range(0, len(df.index)):  # df['Vreme_zastoja']:
 		continue
 	lista1.append(df["Pocetak_zastoja_u_minutima"].iloc[i])
 	lista2.append(df["Kraj_zastoja_u_miutama"].iloc[i])
+    lista3.append(df["Vrsta_zastoja"].iloc[i])
+
+podatci3 = []
+for label in lista3:
+    if label == 'Masinski':
+        podatci3.append(0)
+    elif label == 'Elektro':
+        podatci3.append(1)
+    elif label == 'Ostalo':
+        podatci3.append(2)
 
 podatci1 = np.array(lista1)
 podatci1 = podatci1 - podatci1[0]
 podatci2 = np.array(lista2)
 podatci2 = podatci2 - podatci1[0]
-#podatci1 = podatci1/max(podatci1)
+podatci3 = np.array(podatci3)
 
 def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
     a = np.zeros(podatci2[-1])
