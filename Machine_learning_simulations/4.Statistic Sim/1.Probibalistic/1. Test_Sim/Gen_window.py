@@ -17,14 +17,18 @@ from scipy.special import kl_div
 vreme_simulacije = 259200 # len of  test in min ( 6 month period )
 
 #Load datasets from simulation
-vremena_otkaza = np.load('lista_vremena_otkz_1000_BTD.npy', allow_pickle=True)
-vremena_popravke = np.load('lista_vremena_pop_1000_BTD.npy', allow_pickle=True)
-vrsta_otkaza = np.load('lista_vrsta_pop_1000_BTD.npy', allow_pickle=True)
+vremena_otkaza = np.load('lista_vremena_otkz_4000_BTD.npy', allow_pickle=True) #shape(num of simulations, len of failures in each sim)
+vremena_popravke = np.load('lista_vremena_pop_4000_BTD.npy', allow_pickle=True) #shape(num of simulations, len of repairs in each sim)
+vrsta_otkaza = np.load('lista_vrsta_pop_4000_BTD.npy', allow_pickle=True)  #shape(num of simulations, len of failures in each sim)
 
 #Load Real data
-Real_data_fail = np.load('lista_vremena_otkz_1000_BTD.npy', allow_pickle=True)
-Real_data_fail = np.load('lista_vremena_pop_1000_BTD.npy', allow_pickle=True)
-Real_data_class = np.load('lista_vrsta_pop_1000_BTD.npy', allow_pickle=True)
+#Load real data for evaluation
+name_fail = 'Data/fail_window{}_dt{}h_real.npy'.format(int(7*24*60/(24*60)),int(8*60/60))
+name_repair = 'Data/repair_window{}_dt{}h_real.npy'.format(int(7*24*60/(24*60)),int(8*60/60))
+name_class = 'Data/class_window{}_dt{}h_real.npy'.format(int(7*24*60/(24*60)),int(8*60/60))
+Real_data_fail = np.load(name_fail, allow_pickle=True)
+Real_data_rep = np.load(name_repair, allow_pickle=True)
+Real_data_class = np.load(name_class, allow_pickle=True)
 
 def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
         '''
@@ -80,6 +84,7 @@ def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
         
 for i in range(2):
     ls_ = []
+    #Load data form simulation[i]
     podatci1 = vremena_otkaza[i].reshape(-1)
     podatci2 = vremena_popravke[i].reshape(-1)
     podatci3 = vrsta_otkaza[i].reshape(-1)
@@ -117,11 +122,12 @@ for i in range(2):
             np.save('class_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
             
             #Load real data for evaluation
-            name_fail = 'Data/class_window{}_dt{}h_real'.format(seq_len/(24*60),int(t/60))
-            name_repair = 'Data/class_window{}_dt{}h_real'.format(seq_len/(24*60),int(t/60))
-            name_class = 'Data/class_window{}_dt{}h_real'.format(seq_len/(24*60),int(t/60))
+            #Load real data for evaluation
+            name_fail = 'Data/fail_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)),int(t/60))
+            name_repair = 'Data/repair_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)),int(t/60))
+            name_class = 'Data/class_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)),int(t/60))
             Real_data_fail = np.load(name_fail, allow_pickle=True)
-            Real_data_fail = np.load(name_repair, allow_pickle=True)
+            Real_data_repair = np.load(name_repair, allow_pickle=True)
             Real_data_class = np.load(name_class, allow_pickle=True)
             
             #MSE/Evaluation of real vs predicted failure rate
@@ -131,7 +137,7 @@ for i in range(2):
 
             #MSE/Evaluation of real vs predicted repair rate
             len_tst_st = int(len(Real_data_fail)*0.8)
-            Test_data_repair = Real_data_fail[len_tst_st:len_tst_st + len(mi_gen)].reshape(-1,1)
+            Test_data_repair = Real_data_repair[len_tst_st:len_tst_st + len(mi_gen)].reshape(-1,1)
             MSE_sim_r = mean_squared_error(Test_data_repair, mi_gen)
 
             #KL_divergance/Evaluation KL_divergance for mi_gen distribution
@@ -144,5 +150,8 @@ for i in range(2):
             KL_div = np.mean(res)
             
             #Append results in order 1. Failure_rate 2. Repair_rate 3. Class
-            Results.extend(MSE_sim_f, MSE_sim_r, KL_div)
-
+            Results.extend([MSE_sim_f, MSE_sim_r, KL_div])
+            Results = np.array(Results)
+            
+Results = Results.reshape(-1,3)
+df = pd.DataFrame(Results, ['Failure_rate', 'Repair_rate', 'Class'])
