@@ -112,10 +112,18 @@ for i in range(2):
             fail_distribution = np.array(fail_distribution).reshape(-1, 3)
 
             #Optinal: Save into lists
-            np.save('fail_window{}_dt{}_sim{}.npy'.format(seq_len/(24*60), t, i), lamb_gen)
-            np.save('repair_window{}_dt{}_sim{}.npy'.format(seq_len/(24*60), t, i), lamb_gen)
-            np.save('class_window{}_dt{}_sim{}.npy'.format(seq_len/(24*60), t, i), lamb_gen)
-
+            np.save('fail_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60), int(t/60), i), lamb_gen)
+            np.save('repair_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
+            np.save('class_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
+            
+            #Load real data for evaluation
+            name_fail = 'Data/class_window{}_dt{}h_real'.format(seq_len/(24*60),int(t/60))
+            name_repair = 'Data/class_window{}_dt{}h_real'.format(seq_len/(24*60),int(t/60))
+            name_class = 'Data/class_window{}_dt{}h_real'.format(seq_len/(24*60),int(t/60))
+            Real_data_fail = np.load(name_fail, allow_pickle=True)
+            Real_data_fail = np.load(name_repair, allow_pickle=True)
+            Real_data_class = np.load(name_class, allow_pickle=True)
+            
             #MSE/Evaluation of real vs predicted failure rate
             len_tst_st = int(len(Real_data_fail)*0.8)
             Test_data_fail = Real_data_fail[len_tst_st:len_tst_st + len(lamb_gen)].reshape(-1,1)
