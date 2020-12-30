@@ -83,6 +83,7 @@ def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
         return lambd, mi, fail_distribution
         
 for i in range(2):
+    start = time.time()
     ls_ = []
     #Load data form simulation[i]
     podatci1 = vremena_otkaza[i].reshape(-1)
@@ -117,11 +118,10 @@ for i in range(2):
             fail_distribution = np.array(fail_distribution).reshape(-1, 3)
 
             #Optinal: Save into lists
-            np.save('fail_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60), int(t/60), i), lamb_gen)
-            np.save('repair_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
-            np.save('class_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
+            # np.save('npy_lists/fail_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60), int(t/60), i), lamb_gen)
+            # np.save('npy_lists/repair_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
+            # np.save('npy_lists/class_window{}_dt{}h_sim{}.npy'.format(seq_len/(24*60),int(t/60), i), lamb_gen)
             
-            #Load real data for evaluation
             #Load real data for evaluation
             name_fail = 'Data/fail_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)),int(t/60))
             name_repair = 'Data/repair_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)),int(t/60))
@@ -151,7 +151,14 @@ for i in range(2):
             
             #Append results in order 1. Failure_rate 2. Repair_rate 3. Class
             Results.extend([MSE_sim_f, MSE_sim_r, KL_div])
-            Results = np.array(Results)
+            end = time.time()
+            print('Time:{}min'.format(int(end - start)/60)) #print time for loop[i]
+            t_ls = []
+            t_ls.append(int(end - start)/60)
             
+print('Avg_time: {}'.format(sum(t_ls)/len(t_ls)))            
+Results = np.array(Results)
 Results = Results.reshape(-1,3)
-df = pd.DataFrame(Results, ['Failure_rate', 'Repair_rate', 'Class'])
+df = pd.DataFrame(Results, columns=['Failure_rate', 'Repair_rate', 'Class'])
+df.rename(lambda x: 'Sim_{}'.format(x))
+df.to_excel("Output.xlsx", sheet_name='Rezultati')
