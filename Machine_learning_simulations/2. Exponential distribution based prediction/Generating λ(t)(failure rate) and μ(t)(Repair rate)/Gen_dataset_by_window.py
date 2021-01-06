@@ -123,7 +123,7 @@ for i in range(1):
     podatci3 = podatci3[:min_len]
 
     seq_leng = [7*24*60, 15*24*60, 30*24*60] #windows of 7, 15 and 30 days
-    dt = [8*60] #step of 60 minutes
+    dt = [60] #step of 60 minutes
     Results = []
     for seq_len in seq_leng:
         for t in dt:
@@ -137,4 +137,3 @@ for i in range(1):
             np.save('repair_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)), int(t/60)), mi_gen)
             np.save('class_window{}_dt{}h_real.npy'.format(int(seq_len/(24*60)), int(t/60)), fail_distribution)
             
-
