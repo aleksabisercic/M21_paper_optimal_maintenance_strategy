@@ -30,6 +30,14 @@ Real_data_fail = np.load(name_fail, allow_pickle=True)
 Real_data_rep = np.load(name_repair, allow_pickle=True)
 Real_data_class = np.load(name_class, allow_pickle=True)
 
+def kl_divergence(p, q):
+    '''
+    This is known as the relative entropy 
+    or Kullback-Leibler divergence,
+    or KL divergence, between the distributions p(x) and q(x).
+    '''
+    return sum(p[i] * np.log(p[i]/q[i]) for i in range(len(p)))
+
 def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
         '''
         This Funcion consist of 3 parts:
@@ -81,8 +89,8 @@ def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
             start += t #update for step(dt)
             end += t #update for step(dt)
         return lambd, mi, fail_distribution
-        
-for i in range(2):
+Results = []       
+for i in range(1000):
     start = time.time()
     ls_ = []
     #Load data form simulation[i]
@@ -109,7 +117,6 @@ for i in range(2):
 
     seq_leng = [7*24*60, 15*24*60, 30*24*60] #windows of 7, 15 and 30 days
     dt = [8*60] #step of 60 minutes
-    Results = []
     for seq_len in seq_leng:
         for t in dt:
             lamb, mi, fail_distribution =  gen_lambda_and_mi(podatci1,podatci2,podatci3, int(seq_len), t)
@@ -145,20 +152,20 @@ for i in range(2):
             Test_data_class = Real_data_class[len_tst_st:len_tst_st + len(fail_distribution)]
             res =[] 
             for i in range(len(fail_distribution)):
-                kl_ = kl_div(fail_distribution[i], Test_data_class[i])
-                res.append(sum(kl_))
+                kl_ = kl_divergence(fail_distribution[i], Test_data_class[i])
+                res.append(kl_divergence)
             KL_div = np.mean(res)
             
             #Append results in order 1. Failure_rate 2. Repair_rate 3. Class
             Results.extend([MSE_sim_f, MSE_sim_r, KL_div])
-            end = time.time()
-            print('Time:{}min'.format(int(end - start)/60)) #print time for loop[i]
-            t_ls = []
-            t_ls.append(int(end - start)/60)
             
-print('Avg_time: {}'.format(sum(t_ls)/len(t_ls)))            
+    end = time.time()
+    print('Time:{}sec'.format(end - start)) #print time for loop[i]
+                      
 Results = np.array(Results)
+print(Results.shape)
+np.save('Results.npy', Results)
 Results = Results.reshape(-1,3)
-df = pd.DataFrame(Results, columns=['Failure_rate', 'Repair_rate', 'Class'])
+df = pd.DataFrame(Results, columns=['MSE_sim_fail', 'MSE_sim_repair', 'KL_div'])
 df.rename(lambda x: 'Sim_{}'.format(x))
 df.to_excel("Output.xlsx", sheet_name='Rezultati')
