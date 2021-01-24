@@ -34,10 +34,6 @@ lista2 = []
 lista1 = []
 lista3 = []
 for i in range(0, len(df.index)):  # df['Vreme_zastoja']:
-	if df["Vreme_zastoja"].iloc[i] > 75000: #drop single biggest outlier
-		continue
-	if df["Vreme_rada"].iloc[i] > 75000: #drop huge outliers ( 0,001 percentail )
-		continue
 	lista1.append(df["Pocetak_zastoja_u_minutima"].iloc[i])
 	lista2.append(df["Kraj_zastoja_u_miutama"].iloc[i])
 	lista3.append(df["Vrsta_zastoja"].iloc[i])
@@ -52,10 +48,15 @@ for label in lista3:
         podatci3.append(2)
 
 podatci1 = np.array(lista1)
+podatci1 = podatci1[int(len(podatci1)*0.751):]
 podatci1 = podatci1 - podatci1[0]
+
 podatci2 = np.array(lista2)
-podatci2 = podatci2 - podatci1[0]
+podatci2 = podatci2[int(len(podatci2)*0.751):]
+podatci2 = podatci2 - podatci2[0]
+
 podatci3 = np.array(podatci3)
+podatci3 = podatci3[int(len(podatci3)*0.751):]
 
 def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
         '''
@@ -69,9 +70,9 @@ def gen_lambda_and_mi(podatci1,podatci2, podatci3, seq_len, t):
         '''
 
         #1. step: Generate matrix for each list
-        matrix = np.zeros(podatci2[-1]+1)
+        matrix = np.zeros(podatci1[-1]+1)
         matrix1 = np.zeros(podatci2[-1]+1)
-        matrix2 = np.zeros(podatci2[-1]+1)
+        matrix2 = np.zeros(podatci1[-1]+1)
 
         #2. step: Fill the each Matrix with mooments 
         #(in which minute) event happend (or what type of event happend in that moment (matrix2))
@@ -123,7 +124,7 @@ for i in range(1):
     podatci3 = podatci3[:min_len]
 
     seq_leng = [7*24*60, 15*24*60, 30*24*60] #windows of 7, 15 and 30 days
-    dt = [60] #step of 60 minutes
+    dt = [8*60] #step of 60 minutes
     Results = []
     for seq_len in seq_leng:
         for t in dt:
