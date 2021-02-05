@@ -20,8 +20,8 @@ HAPPY_COLORS_PALETTE = ["#01BEFE", "#FFDD00", "#FF7D00", "#FF006D", "#93D30C", "
 
 sns.set_palette(sns.color_palette(HAPPY_COLORS_PALETTE))
 
-Real_data = np.load("Repair_rates30dt21600h.npy30.npy").reshape(-1,1)
-Sim_data = np.load("Repair_rates30dt21600min_simulacija.npy30.npy")
+Real_data = np.load("repair_window7_dt8h_real.npy").reshape(-1,1)
+Sim_data = np.load("Repair_rates480dt10080min_simulacija.npy480.npy")/4
 len_tst_st = int(len(Real_data)*0.8)
 
 vreme_simulacije = 259200
@@ -37,8 +37,8 @@ plt.plot(Sim_data, '-C2')
 plt.plot(Test_data, '-b')
 plt.show()
 
-Real_data = np.load("Failure_rates_30dt_21600h.npy").reshape(-1,1)
-Sim_data = np.load("Failure_rates_30dt_21600min_simulacija.npy")
+Real_data = np.load("fail_window7_dt8h_real.npy").reshape(-1,1)
+Sim_data = np.load("Failure_rates_480dt_10080min_simulacija.npy")/4
 
 Test_data = Real_data[len_tst_st:len_tst_st + len(Sim_data)].reshape(-1,1)
 
@@ -48,7 +48,7 @@ MAE_sim = mean_absolute_error(Test_data, Sim_data)
 print(MSE_sim)
 print(MAE_sim)
 
-plt.plot(Sim_data[:4500], '-C2')
-plt.plot(Test_data[:4500], '-b')
+plt.plot(Sim_data[:300], '-C2')
+plt.plot(Test_data[:300], '-b')
 plt.show()
 
