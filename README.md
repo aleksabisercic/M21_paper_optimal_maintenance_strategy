@@ -5,7 +5,3 @@
 •	Working with wide range of datasets from business analytics to raw data.
 
 •	Currently on working on paper (preparing for submission in M21scientific journal), I implemented over 40 ML models for time-series data (Failure rate λ(t)) from real-life system and# classify types of faliar based on their length. 
-
-
-
-
