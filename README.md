@@ -11,3 +11,4 @@
 
 Results:
 Improvment of over 30% over currently used Industry application
++ ![Capture11](https://user-images.githubusercontent.com/64646644/110999733-1ddd6300-8381-11eb-9175-499077b5ce67.PNG)
