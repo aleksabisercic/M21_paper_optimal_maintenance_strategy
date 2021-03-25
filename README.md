@@ -9,6 +9,9 @@
 ## Simulation Algorithm (currently in Serbian)
 ![FlowChart Statisticke Sim](https://user-images.githubusercontent.com/64646644/110998430-161cbf00-837f-11eb-9f9f-4ab1fee899fa.jpg)
 
+## Simbolic diagram of the system (currently in Serbian)
+![BTD_sistem](https://user-images.githubusercontent.com/64646644/112521605-fcc33c00-8d9c-11eb-91eb-49cfbfb26bca.jpg)
+
 Results:
 Improvment of over 30% over currently used Industry application
 + ![Capture11](https://user-images.githubusercontent.com/64646644/110999733-1ddd6300-8381-11eb-9175-499077b5ce67.PNG)
