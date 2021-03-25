@@ -9,15 +9,16 @@
 ## Simulation Algorithm (currently in Serbian)
 ![FlowChart Statisticke Sim](https://user-images.githubusercontent.com/64646644/110998430-161cbf00-837f-11eb-9f9f-4ab1fee899fa.jpg)
 
-## Case study: 
-### Simbolic diagram of the system 
+## Case study used: 
+### Simbolic diagram of Indastrial system used
 ![BTD_sistem](https://user-images.githubusercontent.com/64646644/112521605-fcc33c00-8d9c-11eb-91eb-49cfbfb26bca.jpg)
-### Map of the case study system (currently in Serbian)
+*Where M is mechanical component, E is electrical component and O are other component of the respective systems.*
+### GeoMap of the system
 ![kop](https://user-images.githubusercontent.com/64646644/112521957-62172d00-8d9d-11eb-8030-a6236a4bf487.png)
 
 ## LSTM architecture chosen 
 ![LSTM Encoder-decoder Multiver timeseries graph](https://user-images.githubusercontent.com/64646644/112522252-b3272100-8d9d-11eb-9066-d6d0b518e047.png)
 
-Results:
+## Results:
 Prediction of failure rates (improvment of over 30% above widly used industrial standard methodology): 
 + ![Capture11](https://user-images.githubusercontent.com/64646644/110999733-1ddd6300-8381-11eb-9175-499077b5ce67.PNG)
