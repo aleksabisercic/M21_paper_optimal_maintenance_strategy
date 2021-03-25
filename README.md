@@ -5,14 +5,15 @@
 
 ## Methodology Algorithm (currently in Serbian)
  +![FlowChart Metodologije - Frame](https://user-images.githubusercontent.com/64646644/110998369-ff766800-837e-11eb-9b5d-774c21f6a227.jpg)
- 
-## Simulation Algorithm (currently in Serbian)
-![FlowChart Statisticke Sim](https://user-images.githubusercontent.com/64646644/110998430-161cbf00-837f-11eb-9f9f-4ab1fee899fa.jpg)
 
 ## Case study used: 
 ### Simbolic diagram of Indastrial system used
 ![BTD_sistem](https://user-images.githubusercontent.com/64646644/112521605-fcc33c00-8d9c-11eb-91eb-49cfbfb26bca.jpg)
 *Where M is mechanical component, E is electrical component and O are other component of the respective systems.*
+
+### Simulation Algorithm (currently in Serbian)
+![FlowChart Statisticke Sim](https://user-images.githubusercontent.com/64646644/110998430-161cbf00-837f-11eb-9f9f-4ab1fee899fa.jpg)
+
 ### GeoMap of the system
 ![kop](https://user-images.githubusercontent.com/64646644/112521957-62172d00-8d9d-11eb-8030-a6236a4bf487.png)
 
@@ -20,5 +21,5 @@
 ![LSTM Encoder-decoder Multiver timeseries graph](https://user-images.githubusercontent.com/64646644/112522252-b3272100-8d9d-11eb-9066-d6d0b518e047.png)
 
 ## Results:
-Prediction of failure rates (improvment of over 30% above widly used industrial standard methodology): 
-+ ![Capture11](https://user-images.githubusercontent.com/64646644/110999733-1ddd6300-8381-11eb-9175-499077b5ce67.PNG)
+Prediction of failure rates: **improvment of over 30% above widly used industrial standard methodology**: 
+![Capture11](https://user-images.githubusercontent.com/64646644/110999733-1ddd6300-8381-11eb-9175-499077b5ce67.PNG)
