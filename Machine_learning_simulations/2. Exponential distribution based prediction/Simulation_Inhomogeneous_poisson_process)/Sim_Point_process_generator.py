@@ -211,7 +211,7 @@ def gen_lambda_and_mi(podatci1,podatci2, seq_len, t):
     mi.append(sum(matrix1[-seq_len:]))
     return lambd, mi
         
-seq_leng = [7*24*60]
+seq_leng = [15*24*60]
 dt = [8*60]
 
 for seq_len in seq_leng:

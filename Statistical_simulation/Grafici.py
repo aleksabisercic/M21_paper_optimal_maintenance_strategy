@@ -4,7 +4,7 @@ import pickle
 
 name = "BTD"
 broj_sek_plot = 2000000
-sample = [0,1,2]
+sample = [150,45,33]
 
 
 with open('Rezultati/vremena_otkaza_{}.pkl'.format(name), 'rb') as f1:

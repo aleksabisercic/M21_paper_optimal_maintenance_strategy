@@ -14,6 +14,8 @@ import torch.nn.functional as F
 import xlwt as xl
 import pickle
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 df = pd.read_excel("Zastoji.xlsx", index_col = 0)
 df = df[df["Sistem"] == "BTD SchRs-800"]
@@ -32,8 +34,12 @@ for i in range (0,len(df.index)): #df['Vreme_zastoja']:
 	lista.append(df["Vreme_zastoja"].iloc[i])
 	lista1.append(df["Vrsta_zastoja"].iloc[i])
 
+df["Vrsta_zastoja"] = df["Vrsta_zastoja"].astype("category")
+
+
 data_X = np.array(lista).reshape(-1,1)
 labels_raw = np.array(lista1)
+
 
 data_Y = []
 for label in labels_raw:
@@ -46,7 +52,15 @@ for label in labels_raw:
 
 series = np.array(data_Y)
 
-dataY = np.array(data_Y).reshape(-1,1)
+dataY = np.array(data_Y).reshape(-1)
+# integer encode
+label_encoder = LabelEncoder()
+integer_encoded = label_encoder.fit_transform(dataY)
+print(integer_encoded)
+onehot_encoder = OneHotEncoder(sparse=False)
+integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
+onehot_encoded = onehot_encoder.fit_transform(integer_encoded)
+print(onehot_encoded)
 
 def sliding_windows(datax, datay, seq_length):
     x = []
@@ -66,7 +80,7 @@ def plot_series(time, series, format="-", start=0, end=None):
     plt.ylabel("Value")
     plt.grid(True)
 
-x,y = sliding_windows(dataY, dataY, window_size)
+x,y = sliding_windows(onehot_encoded, dataY, window_size)
 split = int(0.8*len(x))
 x_train = x[:split]
 y_train = y[:split]
@@ -82,14 +96,15 @@ def plot_series(time, series, format="-", start=0, end=None):
 
 
 # window_size = 20
-batch_size = 32
+batch_size = 16
 shuffle_buffer_size = 150
 
 # dataset = windowed_dataset(x_train, window_size, batch_size, shuffle_buffer_size)
     
 model = tf.keras.models.Sequential([
-    tf.keras.layers.LSTM(50, return_sequences=True,input_shape=[50, 1], dropout=0.15), 
-    tf.keras.layers.LSTM(20, dropout=0.15),
+    tf.keras.layers.LSTM(50, return_sequences=True,input_shape=[50, 3], dropout=0.15), 
+    tf.keras.layers.LSTM(50, dropout=0.15),
+    tf.keras.layers.Dense(20, activation='relu'),
     tf.keras.layers.Dense(3, activation='softmax')
 ])
 # optimizer = tf.keras.optimizers.SGD(lr=1e-8, momentum=0.9)

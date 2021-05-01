@@ -44,15 +44,11 @@ df = df.sort_values(by = ['Početak zastoja'])
 
 df = df[['Vreme_zastoja', 'Vreme_rada']]
 
-df = df[df.Vreme_zastoja < 2000]
-df = df[df.Vreme_rada < 2000]
 
 lista = []
 lista1 = []
 
-for i in range (len(df.index)): 
-	if df["Vreme_zastoja"].iloc[i] > 2000 or df["Vreme_rada"].iloc[i] > 2000:
-		continue
+for i in range (len(df.index)):
 	lista.append(df["Vreme_zastoja"].iloc[i])
 	lista1.append(df["Vreme_zastoja"].iloc[i])
 	lista.append(df["Vreme_rada"].iloc[i])
